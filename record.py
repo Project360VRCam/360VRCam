@@ -2,7 +2,7 @@ from WebcamVideoStream import WebcamVideoStream
 import numpy as np
 import cv2
 
-fps = 10
+fps = 11
 width = 640
 height = 480
 # Create VideoCapture objects
@@ -13,6 +13,7 @@ cap1 = WebcamVideoStream(fps, src=1).start()
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out0 = cv2.VideoWriter('cam0.avi', fourcc, fps, (width,height))
 out1 = cv2.VideoWriter('cam1.avi', fourcc, fps, (width,height))
+
 
 while(True):
 	
@@ -33,7 +34,7 @@ while(True):
 			# write the frames
 			out0.write(frame0)
 			out1.write(frame1)
-	
+			
 		
 # Release everything if job is finished
 cap0.stop()
