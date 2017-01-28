@@ -1,0 +1,29 @@
+Master program: 1 raspberry pi as acess point, running web server probably implemented with NodeJS? nginx? apache?, cameras connected
+
+Scenario 1: Take picture
+1. Get a signal from the web api when someone presses the button "Take picture"
+2. Send a "1" on a GPIO-pin to all the slaves so that every camera takes a picture.
+3. Take a picture itself 
+
+Scenario 2: Start recording video
+1. Get a signal from the web api when user presses the button "Start recording"
+2. Send a "1" on another GPIO-pin to all the slaves 
+3. Start recording itself --> Run picture program code
+
+
+Slave program: all the other raspberry pis with connected cameras
+
+Scenario 1: Take picture
+1. Check both GPIO-pins constantly
+2. If "1" is recieved on the picture GPIO-pin --> Run picture program code
+
+Scenario 2: Start recording video
+1. Check both GPIO-pins constantly
+2. If "1" is recieved on the video GPIO-pin --> Run video program code
+
+
+Implementation:
+
+webserver: Raspbian, Nginx or Apache- with HTML, PHP and Perl support
+trigger-program: Python
+Recording: Python, OpenCV
