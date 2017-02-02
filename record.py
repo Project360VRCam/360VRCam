@@ -9,7 +9,7 @@ import os
 
 def do_every(interval, worker_func):
 	if(GPIO.input(4)):
-		threading.Timer(interval, rdo_every, [interval, worker_func]).start()
+		threading.Timer(interval, do_every, [interval, worker_func]).start()
 	worker_func()
 	
 def take_picture():
