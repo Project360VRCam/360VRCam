@@ -26,7 +26,7 @@ while True:
     #Take a picture
     if status=='1':
         GPIO.output(18,True)
-        os.system("python recordmaster.py")
+        os.system("python record.py -n 1")
         time.sleep(0.05)
         GPIO.output(18,False)
         print "A picture was taken."
@@ -34,7 +34,7 @@ while True:
     elif status=='2':
         GPIO.output(17,True)
         print "Started recording..."
-        os.system("python recordmaster.py")
+        os.system("python record.py -n 1")
     #Stop recording    
     elif status=='3':
         GPIO.output(17,False)
