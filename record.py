@@ -6,20 +6,25 @@ import threading
 
 import RPi.GPIO as GPIO
 import os
+import time
 
 def do_every(interval, worker_func):
 	if(GPIO.input(4)):
 		threading.Timer(interval, do_every, [interval, worker_func]).start()
-	worker_func()
+		worker_func()
+	else:
+		new_VideoWriters()
+		recording = False
 	
-def take_picture():
+	
+def take_picture(picturecount):
 	global frame, cap
 	for i in range(0,nCameras):
 				frame[i] = cap[i].read()
 			for i in range(0,nCameras):
-				cv2.imwrite('picture'+str(i)+'.png', frame[i])
+				cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
 				
-def record_video():
+def record_frame():
 	global frame, cap, out
 	# read frames
 	for i in range(0,nCameras):
@@ -28,7 +33,13 @@ def record_video():
 	# write the frames
 	for i in range(0,nCameras):
 		out[i].write(frame[i])
-		
+
+
+def new_VideoWriters():
+	global out, videocount
+	for i in range(0,nCameras):
+		out[i] = cv2.VideoWriter('video'+str(videocount)+'_'+str(i)+'.avi', fourcc, fps, (width,height))
+	videocount += 1
 
 def main(argv):
 
@@ -68,29 +79,35 @@ def main(argv):
 	cap = [0]*nCameras
 	out = [0]*nCameras
 	frame = [0]*nCameras
+	
+	picturecount = 0
+	videocount = 0
 
 	# Create VideoCapture objects
-	for i in range(0,nCameras)):
+	for i in range(0,nCameras):
 		cap[i] = WebcamVideoStream(fps, src=i).start()
 
 	# Define the codec and create VideoWriter objects
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
-	for i in range(0,nCameras):
-		out[i] = cv2.VideoWriter('cam'+str(i)+'.avi', fourcc, fps, (width,height))
+	new_VideoWriters()
 	
-	#Making sure that only one picture is taken
-	picturecount = 0
+	recording = False
 
-
-	while(GPIO.input(2)==1 or GPIO.input(4)==1):
+	while(1):
 		
 		#if take picture
 		if(GPIO.input(2)):
-			take_picture()
+			take_picture(picturecount)
+			picturecount += 1
+			time.sleep(1)
+			
 				
 		#if take video
 		if(GPIO.input(4)):
-			do_every(1/fps, record_video)
+			recording = True
+			do_every(1/fps, record_frame)
+			while(recording):
+				pass
 			
 			
 	# Release everything if job is finished
