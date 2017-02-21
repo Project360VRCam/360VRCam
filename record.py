@@ -8,6 +8,14 @@ import RPi.GPIO as GPIO
 import os
 import time
 
+nCameras = 0
+cap = [0]*(nCameras+1)
+out = [0]*(nCameras+1)
+frame = [0]*(nCameras+1)
+	
+picturecount = 0
+videocount = 0
+
 def do_every(interval, worker_func):
 	if(GPIO.input(4)):
 		threading.Timer(interval, do_every, [interval, worker_func]).start()
@@ -17,12 +25,12 @@ def do_every(interval, worker_func):
 		recording = False
 	
 	
-def take_picture(picturecount):
-	global frame, cap
+def take_picture():
+	global frame, cap, nCameras, picturecount
 	for i in range(0,nCameras):
-				frame[i] = cap[i].read()
-			for i in range(0,nCameras):
-				cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
+		frame[i] = cap[i].read()
+	for i in range(0,nCameras):
+		cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
 				
 def record_frame():
 	global frame, cap, out
@@ -43,7 +51,10 @@ def new_VideoWriters():
 
 def main(argv):
 
-	nCameras = ''
+	global nCameras
+	global cap, out, frame, picturecount, fourcc
+	global fps, width, height
+	
 	try:
 		opts, args = getopt.getopt(argv,"hn:")
 	except getopt.GetoptError:
@@ -56,7 +67,7 @@ def main(argv):
 		elif opt in ("-n"):
 			nCameras = arg
 	
-	if nCameras == '':
+	if nCameras == 0:
 		print 'record.py -n <number_of_cameras>'
 		sys.exit()
 
@@ -76,12 +87,6 @@ def main(argv):
 	width = 640
 	height = 480
 	
-	cap = [0]*nCameras
-	out = [0]*nCameras
-	frame = [0]*nCameras
-	
-	picturecount = 0
-	videocount = 0
 
 	# Create VideoCapture objects
 	for i in range(0,nCameras):
@@ -97,7 +102,7 @@ def main(argv):
 		
 		#if take picture
 		if(GPIO.input(2)):
-			take_picture(picturecount)
+			take_picture()
 			picturecount += 1
 			time.sleep(1)
 			
