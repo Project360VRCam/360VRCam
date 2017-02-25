@@ -16,6 +16,7 @@ class WebcamVideoStream:
 		self.stopped = False
 		self.frame_count = 0
 		self.src = src
+			
 
 	def start(self):
 		# start the thread to read frames from the video stream

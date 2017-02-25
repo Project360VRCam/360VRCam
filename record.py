@@ -1,44 +1,134 @@
 from WebcamVideoStream import WebcamVideoStream
 import numpy as np
 import cv2
+import sys, getopt
+import threading
+from threading import Thread, Lock
+import RPi.GPIO as GPIO
+import os
+import time
 
-fps = 11
+nCameras = 0
+cap = [0]*(nCameras+1)
+out = [0]*(nCameras+1)
+	
+picturecount = 0
+videocount = 0
+
+fps = 8
 width = 640
 height = 480
-# Create VideoCapture objects
-cap0 = WebcamVideoStream(fps, src=0).start()
-cap1 = WebcamVideoStream(fps, src=1).start()
 
-# Define the codec and create VideoWriter objects
-fourcc = cv2.VideoWriter_fourcc(*'XVID')
-out0 = cv2.VideoWriter('cam0.avi', fourcc, fps, (width,height))
-out1 = cv2.VideoWriter('cam1.avi', fourcc, fps, (width,height))
+mutex = Lock()
 
+def readVideo(cap):
+	frame = [0]*(nCameras+1)
+	for i in range(0,nCameras):
+		frame[i] = cap[i].read()
+	return frame
 
-while(True):
+def writeVideo(frame):
+	global out
+	for i in range(0,nCameras):
+		out[i].write(frame[i])
+		
+def recordVideo(fps):
+	global cap
+	if(GPIO.input(4)):
+		t = threading.Timer(1.0/fps, recordVideo,[fps])
+		t.daemon = True
+		t.start()
+		frame = readVideo(cap)
+		mutex.acquire()
+		writeVideo(frame)
+		mutex.release()	
+	else:
+		new_VideoWriters()
+		recording = False
 	
-	#if take picture
-	if(False):
-		frame0 = cap0.read()
-		frame1 = cap1.read()
-		cv2.imwrite('picture0.png', frame0)
-		cv2.imwrite('picture1.png', frame1)
+def take_picture():
+	global frame, cap, nCameras, picturecount
+	for i in range(0,nCameras):
+		frame[i] = cap[i].read()
+	for i in range(0,nCameras):
+		cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
+				
+
+def new_VideoWriters():
+	global out, videocount
+	for i in range(0,nCameras):
+		out[i] = cv2.VideoWriter('video'+str(videocount)+'_'+str(i)+'.avi', fourcc, fps, (width,height))
+		print ('New video')
+	videocount += 1
+
+def main(argv):
+
+	global nCameras
+	global cap, picturecount, fourcc
+	
+	try:
+		opts, args = getopt.getopt(argv,"hn:")
+	except getopt.GetoptError:
+		print 'record.py -n <number_of_cameras>'
+		sys.exit(2)
+	for opt, arg in opts:
+		if opt == '-h':
+			print 'record.py -n <number_of_cameras>'
+			sys.exit()
+		elif opt in ("-n"):
+			nCameras = int(arg)
+	
+	if nCameras == 0:
+		print 'record.py -n <number_of_cameras>'
+		sys.exit()
+
 		
-	#if take video
-	if(True):
-		while(True):
-			# read frames
-			frame0 = cap0.read()
-			frame1 = cap1.read()
-			
-			# write the frames
-			out0.write(frame0)
-			out1.write(frame1)
-			
+	#Setup GPIO-pins
+	GPIO.setwarnings(False)
+	GPIO.setmode(GPIO.BCM)
+
+	#Picture input-pin
+	GPIO.setup(2,GPIO.IN)
+
+	#Start/stop recording input-pin
+	GPIO.setup(4,GPIO.IN)
+	print ('GPIO set up')
+
+	
+
+	# Create VideoCapture objects
+	for i in range(0,nCameras):
+		cap[i] = WebcamVideoStream(fps, src=i).start()
+
+	# Define the codec and create VideoWriter objects
+	fourcc = cv2.VideoWriter_fourcc(*'XVID')
+	new_VideoWriters()
+	recording = False
+
+	while(1):
 		
-# Release everything if job is finished
-cap0.stop()
-cap1.stop()
-out0.release()
-out1.release()
-cv2.destroyAllWindows()
+		#if take picture
+		if(GPIO.input(2)):	
+			print 'Take picture'
+			take_picture()
+			picturecount += 1
+			time.sleep(1)
+			
+				
+		#if take video
+		if(GPIO.input(4)):	
+			recording = True
+			print 'Start recording'
+			recordVideo(fps)
+			while(recording):
+				pass
+			
+			
+	# Release everything if job is finished
+	for i in range(0,nCameras):
+		cap[i].stop()
+		out[i].release()
+	cv2.destroyAllWindows()
+	
+if __name__ == "__main__":
+   main(sys.argv[1:])
