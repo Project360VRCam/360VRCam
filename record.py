@@ -48,8 +48,7 @@ def recordVideo(fps):
 	
 def take_picture():
 	global cap, nCameras, picturecount
-	for i in range(0,nCameras):
-		frame = readVideo(cap)
+	frame = readVideo(cap)
 	for i in range(0,nCameras):
 		cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
 				
