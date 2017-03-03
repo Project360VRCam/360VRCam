@@ -15,7 +15,7 @@ out = [0]*(nCameras+1)
 picturecount = 0
 videocount = 0
 
-fps = 8
+fps = 15
 width = 640
 height = 480
 
@@ -44,27 +44,29 @@ def recordVideo(fps):
 		mutex.release()	
 	else:
 		new_VideoWriters()
-		recording = False
+		
 	
 def take_picture():
-	global frame, cap, nCameras, picturecount
+	global cap, nCameras, picturecount
 	for i in range(0,nCameras):
-		frame[i] = cap[i].read()
+		frame = readVideo(cap)
 	for i in range(0,nCameras):
 		cv2.imwrite('picture'+str(picturecount)+'_'+str(i)+'.png', frame[i])
 				
 
 def new_VideoWriters():
-	global out, videocount
+	global out, videocount, recording
 	for i in range(0,nCameras):
 		out[i] = cv2.VideoWriter('video'+str(videocount)+'_'+str(i)+'.avi', fourcc, fps, (width,height))
 		print ('New video')
 	videocount += 1
+	recording = False
 
 def main(argv):
 
 	global nCameras
 	global cap, picturecount, fourcc
+	global recording
 	
 	try:
 		opts, args = getopt.getopt(argv,"hn:")
@@ -103,7 +105,7 @@ def main(argv):
 	# Define the codec and create VideoWriter objects
 	fourcc = cv2.VideoWriter_fourcc(*'XVID')
 	new_VideoWriters()
-	recording = False
+	
 
 	while(1):
 		
