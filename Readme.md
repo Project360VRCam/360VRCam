@@ -22,5 +22,7 @@ The camera is now ready, you can start taking pictures or record video.
 Pictures and videos are saved in the format *pictureN_C.png* or *videoN_C.avi* where N is an incrementing number for each picture/video taken and C is the number of the camera used for that picture/video.
 
 
-#Stitching
+#### Stitching
+
+
 
